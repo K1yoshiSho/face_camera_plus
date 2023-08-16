@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:math';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -379,27 +380,29 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   void _onTakePictureButtonPressed() async {
     final CameraController? cameraController = _controller;
     try {
-      cameraController!.stopImageStream().whenComplete(() async {
-        await Future.delayed(const Duration(milliseconds: 500));
-        takePicture().then((XFile? file) {
-          /// Return image callback
-          if (file != null) {
-            widget.onCapture(File(file.path));
-          }
-
-          /// Resume image stream after 2 seconds of capture
-          Future.delayed(const Duration(seconds: 2)).whenComplete(() {
-            if (mounted && cameraController.value.isInitialized) {
-              try {
-                _startImageStream();
-                setState(() {});
-              } catch (e) {
-                logError(e.toString());
-              }
+      await Future<void>.delayed(Duration.zero);
+      if (cameraController != null && cameraController.value.isStreamingImages) {
+        cameraController.stopImageStream().whenComplete(() async {
+          await Future.delayed(const Duration(milliseconds: 500));
+          takePicture().then((XFile? file) {
+            if (file != null) {
+              widget.onCapture(File(file.path));
             }
+
+            /// Resume image stream after 2 seconds of capture
+            Future.delayed(const Duration(seconds: 2)).whenComplete(() {
+              if (mounted && cameraController.value.isInitialized) {
+                try {
+                  _startImageStream();
+                  setState(() {});
+                } catch (e) {
+                  logError(e.toString());
+                }
+              }
+            });
           });
         });
-      });
+      }
     } catch (e) {
       logError(e.toString());
     }
@@ -421,6 +424,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       XFile file = await cameraController.takePicture();
       return file;
     } on CameraException catch (e) {
+      logError("From: takePicture()");
       _showCameraException(e);
       return null;
     }
