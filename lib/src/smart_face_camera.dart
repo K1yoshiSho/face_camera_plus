@@ -159,6 +159,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   @override
   void initState() {
+    widget.controller.attach(this);
     WidgetsBinding.instance.addObserver(this);
     _getAllAvailableCameraLens();
     _initCamera();
