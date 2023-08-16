@@ -25,6 +25,7 @@ class _MyAppState extends State<MyApp> {
 
   @override
   Widget build(BuildContext context) {
+    Size size = MediaQuery.sizeOf(context);
     return MaterialApp(
       theme: ThemeData.dark(
         useMaterial3: true,
@@ -34,30 +35,33 @@ class _MyAppState extends State<MyApp> {
             title: const Text('FaceCapture example app'),
           ),
           body: Builder(builder: (context) {
-            if (_capturedImage != null) {
-              return Center(
-                child: Stack(
-                  alignment: Alignment.bottomCenter,
-                  children: [
-                    Image.file(
-                      _capturedImage!,
-                      width: double.maxFinite,
-                      fit: BoxFit.fitWidth,
-                    ),
-                    ElevatedButton(
-                        onPressed: () => setState(() => _capturedImage = null),
-                        child: const Text(
-                          'Capture Again',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
-                        ))
-                  ],
-                ),
-              );
-            }
+            // if (_capturedImage != null) {
+            //   return Center(
+            //     child: Stack(
+            //       alignment: Alignment.bottomCenter,
+            //       children: [
+            //         Image.file(
+            //           _capturedImage!,
+            //           width: double.maxFinite,
+            //           fit: BoxFit.fitWidth,
+            //         ),
+            //         ElevatedButton(
+            //             onPressed: () => setState(() => _capturedImage = null),
+            //             child: const Text(
+            //               'Capture Again',
+            //               textAlign: TextAlign.center,
+            //               style: TextStyle(fontSize: 14, fontWeight: FontWeight.w700),
+            //             ))
+            //       ],
+            //     ),
+            //   );
+            // }
             return SmartFaceCamera(
               autoCapture: true,
+              size: size,
               controller: smartFaceController,
+              showCameraLensControl: false,
+              showFlashControl: false,
               defaultCameraLens: CameraLens.front,
               onCapture: (File? image) {
                 setState(() => _capturedImage = image);
