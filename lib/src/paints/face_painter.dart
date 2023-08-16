@@ -34,6 +34,12 @@ class FacePainter extends CustomPainter {
         paint.color = const Color(0xFFef4444);
       } else if (isFetched) {
         paint.color = const Color(0xFF68a835);
+      } else {
+        if (face!.headEulerAngleY! > 10 || face!.headEulerAngleY! < -10) {
+          paint.color = const Color(0xFFef4444);
+        } else {
+          paint.color = const Color(0xFF3C4A7C);
+        }
       }
     } else {
       if (face!.headEulerAngleY! > 10 || face!.headEulerAngleY! < -10) {
