@@ -132,24 +132,16 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     if (cameras.isNotEmpty) {
       _controller = CameraController(cameras.first, EnumHandler.imageResolutionToResolutionPreset(widget.imageResolution),
           enableAudio: widget.enableAudio, imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888);
-      _controller?.addListener(() {
-        if (mounted) {
-          setState(() {});
-        }
-        if (_controller!.value.hasError) {
-          logError('Camera error ${_controller!.value.errorDescription}');
-        }
-      });
+
       await _controller!.initialize().then((_) {
         if (!mounted) {
           return;
         }
+        setState(() {});
       });
 
       await _controller!.lockCaptureOrientation(EnumHandler.cameraOrientationToDeviceOrientation(widget.orientation)).then((_) {
-        if (mounted) {
-          setState(() {});
-        }
+        if (mounted) setState(() {});
       });
     }
 
@@ -185,16 +177,12 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     // App state changed before we got the chance to initialize.
     if (cameraController == null || !cameraController.value.isInitialized) {
       return;
-    } else {
-      if (state == AppLifecycleState.inactive) {
-        cameraController.dispose();
-      } else if (state == AppLifecycleState.resumed) {
-        if (mounted) {
-          setState(() {});
-        } else {
-          _initCamera();
-        }
-      }
+    }
+
+    if (state == AppLifecycleState.inactive) {
+      cameraController.stopImageStream();
+    } else if (state == AppLifecycleState.resumed) {
+      _startImageStream();
     }
   }
 
