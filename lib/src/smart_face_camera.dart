@@ -180,6 +180,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     }
 
     if (state == AppLifecycleState.inactive) {
+      cameraController.dispose();
       cameraController.stopImageStream();
     } else if (state == AppLifecycleState.resumed) {
       _startImageStream();
