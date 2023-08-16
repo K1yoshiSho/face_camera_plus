@@ -1,9 +1,9 @@
-import 'package:flutter/material.dart';
+import 'dart:developer';
 
 void logError(String message, [String? code]) {
   if (code != null) {
-    debugPrint('Error: $code\nError Message: $message');
+    log('Error: $code\nError Message: $message', name: "Face Camera");
   } else {
-    debugPrint('Error: $code');
+    log('Error: $code', name: "Face Camera");
   }
 }
