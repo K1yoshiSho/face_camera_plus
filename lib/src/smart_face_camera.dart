@@ -104,71 +104,61 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   DetectedFace? _detectedFace;
 
-  int _currentCameraLens = 0;
-  final List<CameraLens> _availableCameraLens = [];
+  // Future<void> _initCamera() async {
 
-  void _getAllAvailableCameraLens() {
-    for (CameraDescription d in FaceCamera.cameras) {
-      final lens = EnumHandler.cameraLensDirectionToCameraLens(d.lensDirection);
-      if (lens != null && !_availableCameraLens.contains(lens)) {
-        _availableCameraLens.add(lens);
-      }
-    }
+  //   final cameras = FaceCamera.cameras
+  //       .where((c) => c.lensDirection == EnumHandler.cameraLensToCameraLensDirection(_availableCameraLens[_currentCameraLens]))
+  //       .toList();
 
-    if (widget.defaultCameraLens != null) {
-      try {
-        _currentCameraLens = _availableCameraLens.indexOf(widget.defaultCameraLens!);
-      } catch (e) {
-        logError(e.toString());
-      }
-    }
-  }
+  //   if (cameras.isNotEmpty) {
+  //     _controller = CameraController(cameras.first, EnumHandler.imageResolutionToResolutionPreset(widget.imageResolution),
+  //         enableAudio: widget.enableAudio, imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888);
 
-  Future<void> _initCamera() async {
-    final cameras = FaceCamera.cameras
-        .where((c) => c.lensDirection == EnumHandler.cameraLensToCameraLensDirection(_availableCameraLens[_currentCameraLens]))
-        .toList();
+  //     await _controller!.initialize().then((_) {
+  //       if (!mounted) {
+  //         return;
+  //       }
+  //       setState(() {});
+  //     });
 
-    if (cameras.isNotEmpty) {
-      _controller = CameraController(cameras.first, EnumHandler.imageResolutionToResolutionPreset(widget.imageResolution),
-          enableAudio: widget.enableAudio, imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888);
+  //     await _controller!.lockCaptureOrientation(EnumHandler.cameraOrientationToDeviceOrientation(widget.orientation)).then((_) {
+  //       if (mounted) setState(() {});
+  //     });
+  //   }
 
-      await _controller!.initialize().then((_) {
-        if (!mounted) {
-          return;
-        }
-        setState(() {});
-      });
-
-      await _controller!.lockCaptureOrientation(EnumHandler.cameraOrientationToDeviceOrientation(widget.orientation)).then((_) {
-        if (mounted) setState(() {});
-      });
-    }
-
-    _startImageStream();
-    setState(() {});
-  }
+  //   _startImageStream();
+  //   setState(() {});
+  // }
 
   @override
   void initState() {
+    super.initState();
     widget.controller.attach(this);
     WidgetsBinding.instance.addObserver(this);
-    _getAllAvailableCameraLens();
-    _initCamera();
-    super.initState();
+    _initializeCameraController();
   }
 
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
-    final CameraController? cameraController = _controller;
-
-    if (cameraController != null && cameraController.value.isInitialized) {
-      cameraController.dispose();
-    }
-
     super.dispose();
   }
+
+  // @override
+  // void didChangeAppLifecycleState(AppLifecycleState state) {
+  //   final CameraController? cameraController = _controller;
+
+  //   // App state changed before we got the chance to initialize.
+  //   if (cameraController == null || !cameraController.value.isInitialized) {
+  //     return;
+  //   }
+
+  //   if (state == AppLifecycleState.inactive) {
+  //     cameraController.stopImageStream();
+  //   } else if (state == AppLifecycleState.resumed) {
+  //     _startImageStream();
+  //   }
+  // }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
@@ -180,9 +170,9 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     }
 
     if (state == AppLifecycleState.inactive) {
-      cameraController.stopImageStream();
+      cameraController.dispose();
     } else if (state == AppLifecycleState.resumed) {
-      _startImageStream();
+      _initializeCameraController();
     }
   }
 
@@ -268,22 +258,92 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     );
   }
 
+  Future<void> _initializeCameraController() async {
+    List<CameraDescription> cameras = await availableCameras();
+
+    final CameraController cameraController = CameraController(
+      cameras[1],
+      ResolutionPreset.veryHigh,
+      enableAudio: false,
+      imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
+    );
+
+    _controller = cameraController;
+
+    cameraController.addListener(() {
+      if (mounted) {
+        setState(() {});
+      }
+      if (cameraController.value.hasError) {
+        showInSnackBar('Camera error ${cameraController.value.errorDescription}');
+      }
+    });
+
+    try {
+      await cameraController.initialize().then((_) {
+        _startImageStream();
+        setState(() {});
+      });
+    } on CameraException catch (e) {
+      switch (e.code) {
+        case 'CameraAccessDenied':
+          showInSnackBar('You have denied camera access.');
+          break;
+        case 'CameraAccessDeniedWithoutPrompt':
+          // iOS only
+          showInSnackBar('Please go to Settings app to enable camera access.');
+          break;
+        case 'CameraAccessRestricted':
+          // iOS only
+          showInSnackBar('Camera access is restricted.');
+          break;
+        case 'AudioAccessDenied':
+          showInSnackBar('You have denied audio access.');
+          break;
+        case 'AudioAccessDeniedWithoutPrompt':
+          // iOS only
+          showInSnackBar('Please go to Settings app to enable audio access.');
+          break;
+        case 'AudioAccessRestricted':
+          // iOS only
+          showInSnackBar('Audio access is restricted.');
+          break;
+        default:
+          _showCameraException(e);
+          break;
+      }
+    }
+
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  void showInSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
   /// Render camera.
   Widget _cameraDisplayWidget() {
     final CameraController? cameraController = _controller;
     if (cameraController != null && cameraController.value.isInitialized) {
-      return CameraPreview(cameraController, child: Builder(builder: (context) {
-        if (widget.messageBuilder != null) {
-          return widget.messageBuilder!.call(context, _detectedFace);
-        }
-        if (widget.message != null) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 55, vertical: 15),
-            child: Text(widget.message!, textAlign: TextAlign.center, style: widget.messageStyle),
-          );
-        }
-        return const SizedBox.shrink();
-      }));
+      return CameraPreview(
+        cameraController,
+        child: Builder(
+          builder: (context) {
+            if (widget.messageBuilder != null) {
+              return widget.messageBuilder!.call(context, _detectedFace);
+            }
+            if (widget.message != null) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 55, vertical: 15),
+                child: Text(widget.message!, textAlign: TextAlign.center, style: widget.messageStyle),
+              );
+            }
+            return const SizedBox.shrink();
+          },
+        ),
+      );
     }
     return const SizedBox.shrink();
   }
