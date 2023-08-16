@@ -192,9 +192,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
         if (mounted) {
           setState(() {});
         } else {
-          cameraController.dispose().then((_) {
-            _initCamera();
-          });
+          _initCamera();
         }
       }
     }
