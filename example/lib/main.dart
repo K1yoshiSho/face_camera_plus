@@ -57,7 +57,7 @@ class _MyAppState extends State<MyApp> {
             //   );
             // }
             return SmartFaceCamera(
-              autoCapture: true,
+              autoCapture: false,
               size: size,
               controller: smartFaceController,
               defaultCameraLens: CameraLensDirection.front,
@@ -73,6 +73,10 @@ class _MyAppState extends State<MyApp> {
                 }
                 if (!face.wellPositioned) {
                   return _message('Center your face in the square');
+                }
+
+                if (face.wellPositioned) {
+                  return _message('Face detected');
                 }
                 return const SizedBox.shrink();
               },

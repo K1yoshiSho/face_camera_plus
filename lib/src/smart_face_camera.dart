@@ -333,7 +333,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       await Future<void>.delayed(Duration.zero);
       if (cameraController != null && cameraController.value.isStreamingImages) {
         cameraController.stopImageStream().whenComplete(() async {
-          await Future<void>.delayed(Duration.zero).then(
+          await Future<void>.delayed(const Duration(milliseconds: 100)).then(
             (value) {
               takePicture().then((XFile? file) {
                 if (file != null) {
@@ -375,15 +375,15 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     try {
       XFile file = await cameraController.takePicture();
       return file;
-    } on CameraException catch (e) {
+    } on Exception catch (e) {
       logError("From: takePicture()");
       _showCameraException(e);
       return null;
     }
   }
 
-  void _showCameraException(CameraException e) {
-    logError(e.code, e.description);
+  void _showCameraException(Exception e) {
+    logError(e.toString());
     // showInSnackBar('Error: ${e.code}\n${e.description}');
   }
 

@@ -1,3 +1,5 @@
+import 'dart:math';
+import 'dart:developer' as developer;
 import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
@@ -40,7 +42,12 @@ class FaceIdentifier {
   }
 
   static Future<DetectedFace?> _detectFace({required visionImage}) async {
-    final options = FaceDetectorOptions();
+    final options = FaceDetectorOptions(
+      enableContours: true,
+      enableLandmarks: true,
+      enableTracking: true,
+      performanceMode: FaceDetectorMode.fast,
+    );
     final faceDetector = FaceDetector(options: options);
     try {
       final List<Face> faces = await faceDetector.processImage(visionImage);
@@ -53,28 +60,30 @@ class FaceIdentifier {
   }
 
   static _extractFace(List<Face> faces) {
-    //List<Rect> rect = [];
     bool wellPositioned = faces.isNotEmpty;
     Face? detectedFace;
 
     for (Face face in faces) {
       // rect.add(face.boundingBox);
+      final FaceLandmark? leftEar = face.landmarks[FaceLandmarkType.leftEar];
+      final FaceLandmark? rightEar = face.landmarks[FaceLandmarkType.rightEar];
       detectedFace = face;
-
+      // developer.log("face.headEulerAngleX:${leftEar?.position.x}");
+      // developer.log("face.headEulerAngleZ:${face.headEulerAngleZ}");
+      // developer.log("face.headEulerAngleX:${face.headEulerAngleX}");
       // Head is rotated to the right rotY degrees
-      if (face.headEulerAngleY! > 2 || face.headEulerAngleY! < -2) {
+      if (face.headEulerAngleY! > 3 || face.headEulerAngleY! < -3) {
         wellPositioned = false;
       }
 
       // Head is tilted sideways rotZ degrees
-      if (face.headEulerAngleZ! > 2 || face.headEulerAngleZ! < -2) {
+      if (face.headEulerAngleZ! > 30 || face.headEulerAngleZ! < -30) {
         wellPositioned = false;
       }
 
       // If landmark detection was enabled with FaceDetectorOptions (mouth, ears,
       // eyes, cheeks, and nose available):
-      final FaceLandmark? leftEar = face.landmarks[FaceLandmarkType.leftEar];
-      final FaceLandmark? rightEar = face.landmarks[FaceLandmarkType.rightEar];
+
       if (leftEar != null && rightEar != null) {
         if (leftEar.position.y < 0 || leftEar.position.x < 0 || rightEar.position.y < 0 || rightEar.position.x < 0) {
           wellPositioned = false;
