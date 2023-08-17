@@ -31,10 +31,11 @@ class _MyAppState extends State<MyApp> {
         useMaterial3: true,
       ),
       home: Scaffold(
-          appBar: AppBar(
-            title: const Text('FaceCapture example app'),
-          ),
-          body: Builder(builder: (context) {
+        appBar: AppBar(
+          title: const Text('FaceCapture example app'),
+        ),
+        body: Builder(
+          builder: (context) {
             // if (_capturedImage != null) {
             //   return Center(
             //     child: Stack(
@@ -60,6 +61,7 @@ class _MyAppState extends State<MyApp> {
               autoCapture: false,
               size: size,
               controller: smartFaceController,
+              showCaptureControl: false,
               defaultCameraLens: CameraLensDirection.front,
               onCapture: (File? image) {
                 setState(() => _capturedImage = image);
@@ -68,20 +70,19 @@ class _MyAppState extends State<MyApp> {
                 //Do something
               },
               messageBuilder: (context, face) {
-                if (face == null) {
+                if (face?.face == null) {
                   return _message('Place your face in the camera');
-                }
-                if (!face.wellPositioned) {
+                } else if (face != null && !face.wellPositioned) {
                   return _message('Center your face in the square');
-                }
-
-                if (face.wellPositioned) {
+                } else if (face != null && face.wellPositioned) {
                   return _message('Face detected');
                 }
                 return const SizedBox.shrink();
               },
             );
-          })),
+          },
+        ),
+      ),
     );
   }
 

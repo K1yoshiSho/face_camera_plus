@@ -1,5 +1,5 @@
-import 'dart:math';
-import 'dart:developer' as developer;
+// import 'dart:math';
+import 'dart:developer';
 import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
@@ -59,50 +59,24 @@ class FaceIdentifier {
     }
   }
 
-  static _extractFace(List<Face> faces) {
-    bool wellPositioned = faces.isNotEmpty;
-    Face? detectedFace;
-
-    for (Face face in faces) {
-      // rect.add(face.boundingBox);
-      final FaceLandmark? leftEar = face.landmarks[FaceLandmarkType.leftEar];
-      final FaceLandmark? rightEar = face.landmarks[FaceLandmarkType.rightEar];
-      detectedFace = face;
-      // developer.log("face.headEulerAngleX:${leftEar?.position.x}");
-      // developer.log("face.headEulerAngleZ:${face.headEulerAngleZ}");
-      // developer.log("face.headEulerAngleX:${face.headEulerAngleX}");
-      // Head is rotated to the right rotY degrees
-      if (face.headEulerAngleY! > 3 || face.headEulerAngleY! < -3) {
-        wellPositioned = false;
-      }
-
-      // Head is tilted sideways rotZ degrees
-      if (face.headEulerAngleZ! > 30 || face.headEulerAngleZ! < -30) {
-        wellPositioned = false;
-      }
-
-      // If landmark detection was enabled with FaceDetectorOptions (mouth, ears,
-      // eyes, cheeks, and nose available):
-
-      if (leftEar != null && rightEar != null) {
-        if (leftEar.position.y < 0 || leftEar.position.x < 0 || rightEar.position.y < 0 || rightEar.position.x < 0) {
-          wellPositioned = false;
-        }
-      }
-
-      if (face.leftEyeOpenProbability != null) {
-        if (face.leftEyeOpenProbability! < 0.5) {
-          wellPositioned = false;
-        }
-      }
-
-      if (face.rightEyeOpenProbability != null) {
-        if (face.rightEyeOpenProbability! < 0.5) {
-          wellPositioned = false;
-        }
-      }
+  static DetectedFace _extractFace(List<Face> faces) {
+    if (faces.isEmpty) {
+      return const DetectedFace(wellPositioned: false, face: null);
     }
 
-    return DetectedFace(wellPositioned: wellPositioned, face: detectedFace);
+    final face = faces.first;
+    final leftEar = face.landmarks[FaceLandmarkType.leftEar];
+    final rightEar = face.landmarks[FaceLandmarkType.rightEar];
+
+    final wellPositioned = !(face.headEulerAngleY! > 2 || face.headEulerAngleY! < -2) &&
+        !(face.headEulerAngleZ! > 30 || face.headEulerAngleZ! < -30) &&
+        (leftEar?.position.y ?? -1) >= 0 &&
+        (leftEar?.position.x ?? -1) >= 0 &&
+        (rightEar?.position.y ?? -1) >= 0 &&
+        (rightEar?.position.x ?? -1) >= 0 &&
+        (face.leftEyeOpenProbability == null || face.leftEyeOpenProbability! >= 0.5) &&
+        (face.rightEyeOpenProbability == null || face.rightEyeOpenProbability! >= 0.5);
+
+    return DetectedFace(wellPositioned: wellPositioned, face: face);
   }
 }

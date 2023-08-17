@@ -93,6 +93,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   CameraController? _controller;
 
   bool _alreadyCheckingImage = false;
+  bool isDisposed = false;
 
   DetectedFace? _detectedFace;
 
@@ -120,8 +121,18 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
     if (state == AppLifecycleState.inactive) {
       cameraController.dispose();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          isDisposed = true;
+        });
+      });
     } else if (state == AppLifecycleState.resumed) {
       _initializeCameraController();
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        setState(() {
+          isDisposed = false;
+        });
+      });
     }
   }
 
@@ -131,7 +142,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     return Stack(
       alignment: Alignment.center,
       children: [
-        if (cameraController != null && cameraController.value.isInitialized) ...[
+        if (cameraController != null && cameraController.value.isInitialized && !isDisposed) ...[
           Transform.scale(
             scale: 1.0,
             child: AspectRatio(
@@ -187,15 +198,16 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
             painter: HolePainter(),
           )
         ],
-        if (widget.showCaptureControl) ...[
-          Align(
-            alignment: Alignment.bottomCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 16),
+        Align(
+          alignment: Alignment.bottomCenter,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 16),
+            child: Visibility(
+              visible: widget.showCaptureControl,
               child: _captureControlWidget(),
             ),
-          )
-        ]
+          ),
+        )
       ],
     );
   }
