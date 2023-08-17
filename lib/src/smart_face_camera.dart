@@ -1,11 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-
-import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 
 import '../face_camera.dart';
-import 'handlers/enum_handler.dart';
+
 import 'handlers/face_identifier.dart';
 import 'paints/face_painter.dart';
 import 'paints/hole_painter.dart';
@@ -42,14 +40,11 @@ class SmartFaceController {
 class SmartFaceCamera extends StatefulWidget {
   final ImageResolution imageResolution;
   final SmartFaceController controller;
-  final CameraLens? defaultCameraLens;
+  final CameraLensDirection? defaultCameraLens;
   final CameraFlashMode defaultFlashMode;
   final bool enableAudio;
   final bool autoCapture;
-  final bool showControls;
   final bool showCaptureControl;
-  final bool showFlashControl;
-  final bool showCameraLensControl;
   final String? message;
   final TextStyle messageStyle;
   final CameraOrientation? orientation;
@@ -70,10 +65,7 @@ class SmartFaceCamera extends StatefulWidget {
     this.defaultCameraLens,
     this.enableAudio = true,
     this.autoCapture = false,
-    this.showControls = true,
     this.showCaptureControl = true,
-    this.showFlashControl = true,
-    this.showCameraLensControl = true,
     this.message,
     this.defaultFlashMode = CameraFlashMode.auto,
     this.orientation = CameraOrientation.portraitUp,
@@ -104,32 +96,6 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   DetectedFace? _detectedFace;
 
-  // Future<void> _initCamera() async {
-
-  //   final cameras = FaceCamera.cameras
-  //       .where((c) => c.lensDirection == EnumHandler.cameraLensToCameraLensDirection(_availableCameraLens[_currentCameraLens]))
-  //       .toList();
-
-  //   if (cameras.isNotEmpty) {
-  //     _controller = CameraController(cameras.first, EnumHandler.imageResolutionToResolutionPreset(widget.imageResolution),
-  //         enableAudio: widget.enableAudio, imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888);
-
-  //     await _controller!.initialize().then((_) {
-  //       if (!mounted) {
-  //         return;
-  //       }
-  //       setState(() {});
-  //     });
-
-  //     await _controller!.lockCaptureOrientation(EnumHandler.cameraOrientationToDeviceOrientation(widget.orientation)).then((_) {
-  //       if (mounted) setState(() {});
-  //     });
-  //   }
-
-  //   _startImageStream();
-  //   setState(() {});
-  // }
-
   @override
   void initState() {
     super.initState();
@@ -144,27 +110,10 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     super.dispose();
   }
 
-  // @override
-  // void didChangeAppLifecycleState(AppLifecycleState state) {
-  //   final CameraController? cameraController = _controller;
-
-  //   // App state changed before we got the chance to initialize.
-  //   if (cameraController == null || !cameraController.value.isInitialized) {
-  //     return;
-  //   }
-
-  //   if (state == AppLifecycleState.inactive) {
-  //     cameraController.stopImageStream();
-  //   } else if (state == AppLifecycleState.resumed) {
-  //     _startImageStream();
-  //   }
-  // }
-
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     final CameraController? cameraController = _controller;
 
-    // App state changed before we got the chance to initialize.
     if (cameraController == null || !cameraController.value.isInitialized) {
       return;
     }
@@ -178,8 +127,6 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   @override
   Widget build(BuildContext context) {
-    // final size = MediaQuery.of(context).size;
-
     final CameraController? cameraController = _controller;
     return Stack(
       alignment: Alignment.center,
@@ -240,17 +187,12 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
             painter: HolePainter(),
           )
         ],
-        if (widget.showControls) ...[
+        if (widget.showCaptureControl) ...[
           Align(
             alignment: Alignment.bottomCenter,
             child: Padding(
-              padding: const EdgeInsets.all(15.0),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (widget.showCaptureControl) ...[const SizedBox(width: 15), _captureControlWidget(), const SizedBox(width: 15)],
-                ],
-              ),
+              padding: const EdgeInsets.only(bottom: 16),
+              child: _captureControlWidget(),
             ),
           )
         ]
@@ -262,7 +204,9 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     List<CameraDescription> cameras = await availableCameras();
 
     final CameraController cameraController = CameraController(
-      cameras[1],
+      cameras.where((element) {
+        return element.lensDirection == widget.defaultCameraLens;
+      }).first,
       ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,

@@ -1,6 +1,3 @@
-
-
-
 import 'dart:io';
 import 'package:wakelock/wakelock.dart';
 import 'package:flutter/material.dart';
@@ -63,9 +60,7 @@ class _MyAppState extends State<MyApp> {
               autoCapture: true,
               size: size,
               controller: smartFaceController,
-              showCameraLensControl: false,
-              showFlashControl: false,
-              defaultCameraLens: CameraLens.front,
+              defaultCameraLens: CameraLensDirection.front,
               onCapture: (File? image) {
                 setState(() => _capturedImage = image);
               },
