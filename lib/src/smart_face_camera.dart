@@ -1,5 +1,8 @@
 import 'dart:async';
+import 'dart:developer' as dev;
 import 'dart:io';
+import 'dart:math';
+
 import 'package:flutter/material.dart';
 
 import '../face_camera.dart';
@@ -59,6 +62,8 @@ class SmartFaceCamera extends StatefulWidget {
   final bool isFetched;
   final bool isStateEnabled;
   final Size size;
+  final int? sensorOrientation;
+  final int? previewOrientation;
 
   const SmartFaceCamera({
     this.imageResolution = ImageResolution.medium,
@@ -83,6 +88,8 @@ class SmartFaceCamera extends StatefulWidget {
     this.isFetched = false,
     this.isStateEnabled = false,
     required this.size,
+    this.sensorOrientation,
+    this.previewOrientation,
   }) : super(key: key);
 
   @override
@@ -113,6 +120,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    dev.log(FaceCamera.cameras.toString());
     final CameraController? cameraController = _controller;
 
     if (cameraController == null || !cameraController.value.isInitialized) {
@@ -143,45 +151,47 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       alignment: Alignment.center,
       children: [
         if (cameraController != null && cameraController.value.isInitialized && !isDisposed) ...[
-          Transform.scale(
-            scale: 1.0,
-            child: AspectRatio(
-              aspectRatio: widget.size.aspectRatio,
-              child: OverflowBox(
-                alignment: Alignment.center,
-                child: FittedBox(
-                  fit: BoxFit.fitHeight,
-                  child: SizedBox(
-                    width: widget.size.width,
-                    height: widget.size.width * cameraController.value.aspectRatio,
-                    child: Stack(
-                      fit: StackFit.expand,
-                      children: <Widget>[
-                        _cameraDisplayWidget(),
-                        if (_detectedFace != null) ...[
-                          SizedBox(
-                            width: cameraController.value.previewSize!.width,
-                            height: cameraController.value.previewSize!.height,
-                            child: CustomPaint(
-                              painter: FacePainter(
-                                face: _detectedFace!.face,
-                                imageSize: Size(
-                                  _controller!.value.previewSize!.height,
-                                  _controller!.value.previewSize!.width,
-                                ),
-                                isError: widget.isError,
-                                isLoading: widget.isLoading,
-                                isFetched: widget.isFetched,
-                                isStateEnable: widget.isStateEnabled,
-                              ),
-                            ),
-                          )
-                        ]
-                      ],
-                    ),
-                  ),
+          SizedBox(
+            width: widget.size.width,
+            height: widget.size.width * cameraController.value.aspectRatio,
+            child: Stack(
+              fit: StackFit.expand,
+              children: <Widget>[
+                _cameraDisplayWidget(),
+                Builder(
+                  builder: (context) {
+                    if (widget.messageBuilder != null) {
+                      return widget.messageBuilder!.call(context, _detectedFace);
+                    }
+                    if (widget.message != null) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 55, vertical: 15),
+                        child: Text(widget.message!, textAlign: TextAlign.center, style: widget.messageStyle),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
                 ),
-              ),
+                if (_detectedFace != null) ...[
+                  SizedBox(
+                    width: cameraController.value.previewSize!.width,
+                    height: cameraController.value.previewSize!.height,
+                    child: CustomPaint(
+                      painter: FacePainter(
+                        face: _detectedFace!.face,
+                        imageSize: Size(
+                          _controller!.value.previewSize!.height,
+                          _controller!.value.previewSize!.width,
+                        ),
+                        isError: widget.isError,
+                        isLoading: widget.isLoading,
+                        isFetched: widget.isFetched,
+                        isStateEnable: widget.isStateEnabled,
+                      ),
+                    ),
+                  )
+                ]
+              ],
             ),
           )
         ] else ...[
@@ -213,12 +223,14 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   }
 
   Future<void> _initializeCameraController() async {
-    List<CameraDescription> cameras = await availableCameras();
-
+    List<CameraDescription> cameras = FaceCamera.cameras;
+    CameraDescription cameraDescription = cameras.firstWhere((element) => element.lensDirection == widget.defaultCameraLens);
     final CameraController cameraController = CameraController(
-      cameras.where((element) {
-        return element.lensDirection == widget.defaultCameraLens;
-      }).first,
+      CameraDescription(
+        name: cameraDescription.name,
+        lensDirection: CameraLensDirection.front,
+        sensorOrientation: widget.sensorOrientation ?? cameraDescription.sensorOrientation,
+      ),
       ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
@@ -283,21 +295,10 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   Widget _cameraDisplayWidget() {
     final CameraController? cameraController = _controller;
     if (cameraController != null && cameraController.value.isInitialized) {
-      return CameraPreview(
-        cameraController,
-        child: Builder(
-          builder: (context) {
-            if (widget.messageBuilder != null) {
-              return widget.messageBuilder!.call(context, _detectedFace);
-            }
-            if (widget.message != null) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 55, vertical: 15),
-                child: Text(widget.message!, textAlign: TextAlign.center, style: widget.messageStyle),
-              );
-            }
-            return const SizedBox.shrink();
-          },
+      return Transform.rotate(
+        angle: ((widget.previewOrientation ?? cameraController.description.sensorOrientation + 90) % 360) * (pi / 180),
+        child: CameraPreview(
+          cameraController,
         ),
       );
     }

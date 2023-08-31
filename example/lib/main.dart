@@ -22,6 +22,17 @@ class MyApp extends StatefulWidget {
 class _MyAppState extends State<MyApp> {
   File? _capturedImage;
   SmartFaceController smartFaceController = SmartFaceController();
+  final _cameras = [];
+
+  @override
+  void initState() {
+    addCameras();
+    super.initState();
+  }
+
+  void addCameras() async {
+    _cameras.addAll(await availableCameras());
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,9 +82,9 @@ class _MyAppState extends State<MyApp> {
               },
               messageBuilder: (context, face) {
                 if (face?.face == null) {
-                  return _message('Place your face in the camera');
+                  return _message('Place your face in the camera: ${_cameras}');
                 } else if (face != null && !face.wellPositioned) {
-                  return _message('Center your face in the square');
+                  return _message('Center your face in the square: ${_cameras}');
                 } else if (face != null && face.wellPositioned) {
                   return _message('Face detected');
                 }
