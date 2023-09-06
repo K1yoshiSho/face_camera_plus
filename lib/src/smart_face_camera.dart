@@ -153,7 +153,6 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
         if (cameraController != null && cameraController.value.isInitialized && !isDisposed) ...[
           SizedBox(
             width: widget.size.width,
-            height: widget.size.width * cameraController.value.aspectRatio,
             child: Stack(
               fit: StackFit.expand,
               children: <Widget>[
