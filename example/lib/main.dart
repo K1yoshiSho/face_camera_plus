@@ -73,6 +73,8 @@ class _MyAppState extends State<MyApp> {
               size: size,
               controller: smartFaceController,
               showCaptureControl: false,
+              sensorOrientation: 270,
+              previewOrientation: 180,
               defaultCameraLens: CameraLensDirection.front,
               onCapture: (File? image) {
                 setState(() => _capturedImage = image);
