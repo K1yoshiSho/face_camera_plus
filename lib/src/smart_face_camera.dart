@@ -344,28 +344,26 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     try {
       await Future<void>.delayed(Duration.zero);
       if (cameraController != null && cameraController.value.isStreamingImages) {
-        cameraController.stopImageStream().whenComplete(() async {
-          await Future<void>.delayed(const Duration(milliseconds: 100)).then(
-            (value) {
-              takePicture().then((XFile? file) {
-                if (file != null) {
-                  widget.onCapture(File(file.path));
-                }
+        // cameraController.stopImageStream().whenComplete(() async {
+        await Future<void>.delayed(const Duration(milliseconds: 100)).then(
+          (value) {
+            takePicture().then((XFile? file) {
+              if (file != null) {
+                widget.onCapture(File(file.path));
+              }
 
-                Future.delayed(const Duration(milliseconds: 100)).whenComplete(() {
-                  if (mounted && cameraController.value.isInitialized) {
-                    try {
-                      _startImageStream();
-                      setState(() {});
-                    } catch (e) {
-                      logError(e.toString());
-                    }
+              Future.delayed(const Duration(milliseconds: 100)).whenComplete(() {
+                if (mounted && cameraController.value.isInitialized) {
+                  try {
+                    // _startImageStream();
+                  } catch (e) {
+                    logError(e.toString());
                   }
-                });
+                }
               });
-            },
-          );
-        });
+            });
+          },
+        );
       }
     } catch (e) {
       logError(e.toString());
