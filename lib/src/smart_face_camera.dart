@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:developer' as dev;
+import 'dart:developer';
 import 'dart:io';
-import 'dart:math';
+import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -52,7 +52,7 @@ class SmartFaceCamera extends StatefulWidget {
   final TextStyle messageStyle;
   final CameraOrientation? orientation;
   final void Function(File? image) onCapture;
-  final void Function(Face? face)? onFaceDetected;
+  final void Function(Face? face, CameraImage? cameraImage)? onFaceDetected;
   final Widget? captureControlIcon;
   final Widget? lensControlIcon;
   final FlashControlBuilder? flashControlBuilder;
@@ -101,6 +101,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   bool _alreadyCheckingImage = false;
   bool isDisposed = false;
+  bool isPhotoTaking = false;
 
   DetectedFace? _detectedFace;
 
@@ -120,33 +121,38 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    dev.log(FaceCamera.cameras.toString());
     final CameraController? cameraController = _controller;
 
+    // App state changed before we got the chance to initialize.
     if (cameraController == null || !cameraController.value.isInitialized) {
       return;
     }
 
     if (state == AppLifecycleState.inactive) {
-      cameraController.dispose();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          isDisposed = true;
+      if (cameraController.value.isStreamingImages) {
+        cameraController.stopImageStream();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {
+            isDisposed = true;
+          });
         });
-      });
+      }
     } else if (state == AppLifecycleState.resumed) {
-      _initializeCameraController();
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        setState(() {
-          isDisposed = false;
+      if (!cameraController.value.isStreamingImages) {
+        _initializeCameraController();
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          setState(() {
+            isDisposed = false;
+          });
         });
-      });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     final CameraController? cameraController = _controller;
+    log("isPhotoTaking: $isPhotoTaking");
     return Stack(
       alignment: Alignment.center,
       children: [
@@ -295,7 +301,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     final CameraController? cameraController = _controller;
     if (cameraController != null && cameraController.value.isInitialized) {
       return Transform.rotate(
-        angle: ((widget.previewOrientation ?? cameraController.description.sensorOrientation + 90) % 360) * (pi / 180),
+        angle: ((widget.previewOrientation ?? cameraController.description.sensorOrientation + 90) % 360) * (math.pi / 180),
         child: CameraPreview(
           cameraController,
         ),
@@ -343,24 +349,15 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     final CameraController? cameraController = _controller;
     try {
       await Future<void>.delayed(Duration.zero);
-      if (cameraController != null && cameraController.value.isStreamingImages) {
-        // cameraController.stopImageStream().whenComplete(() async {
-        await Future<void>.delayed(const Duration(milliseconds: 100)).then(
+      if (cameraController != null && cameraController.value.isStreamingImages && !isPhotoTaking) {
+        await Future<void>.delayed(const Duration(milliseconds: 200)).then(
           (value) {
+            isPhotoTaking = true;
             takePicture().then((XFile? file) {
               if (file != null) {
                 widget.onCapture(File(file.path));
+                isPhotoTaking = false;
               }
-
-              Future.delayed(const Duration(milliseconds: 100)).whenComplete(() {
-                if (mounted && cameraController.value.isInitialized) {
-                  try {
-                    // _startImageStream();
-                  } catch (e) {
-                    logError(e.toString());
-                  }
-                }
-              });
             });
           },
         );
@@ -416,7 +413,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
             try {
               if (result.wellPositioned) {
                 if (widget.onFaceDetected != null) {
-                  widget.onFaceDetected!.call(result.face);
+                  widget.onFaceDetected!.call(result.face, cameraImage);
                 }
                 if (widget.autoCapture) {
                   _onTakePictureButtonPressed();
