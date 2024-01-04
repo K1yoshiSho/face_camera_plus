@@ -238,7 +238,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       ),
       ResolutionPreset.veryHigh,
       enableAudio: false,
-      imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.nv21 : ImageFormatGroup.bgra8888,
+      imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.yuv420 : ImageFormatGroup.bgra8888,
     );
 
     _controller = cameraController;

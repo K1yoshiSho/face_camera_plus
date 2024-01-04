@@ -1,7 +1,7 @@
 import 'package:image/image.dart' as imglib;
 import 'package:camera/camera.dart';
 
-imglib.Image? _convertYUV420toImageColor(CameraImage image) {
+imglib.Image? convertYUV420toImageColor(CameraImage image) {
   const shift = (0xFF << 24);
 
   final int width = image.width;
