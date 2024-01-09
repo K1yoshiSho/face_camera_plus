@@ -88,15 +88,13 @@ class _MyAppState extends State<MyApp> {
                 // setState(() => _capturedImage = image);
               },
               onFaceDetected: (Face? face, CameraImage? image) async {
-                Uint8List imageBytes = image!.planes[0].bytes;
-                //convert bytedata to image
-                imglib.Image? bitmap = convertYUV420toImageColor(image);
-                final Directory? tempDir = Directory('/storage/emulated/0/Download');
-                final String tempPath = "${tempDir?.path}/${DateTime.now().millisecondsSinceEpoch}.jpg";
+                // imglib.Image? bitmap = convertYUV420toImageColor(image);
+                // final Directory? tempDir = Directory('/storage/emulated/0/Download');
+                // final String tempPath = "${tempDir?.path}/${DateTime.now().millisecondsSinceEpoch}.jpg";
 
-                //then save on your directories use path_provider package to get all directories you are able to save in a device
-                File(tempPath).writeAsBytesSync(imglib.encodeJpg(bitmap!));
-                setState(() => _capturedImage = File(tempPath));
+                // //then save on your directories use path_provider package to get all directories you are able to save in a device
+                // File(tempPath).writeAsBytesSync(imglib.encodeJpg(bitmap!));
+                // setState(() => _capturedImage = File(tempPath));
                 smartFaceController.stopCamera();
               },
               messageBuilder: (context, face) {

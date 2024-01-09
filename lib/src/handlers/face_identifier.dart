@@ -1,5 +1,4 @@
 // import 'dart:math';
-import 'dart:developer';
 import 'dart:ui';
 import 'package:camera/camera.dart';
 import 'package:flutter/foundation.dart';
@@ -69,7 +68,7 @@ class FaceIdentifier {
     final rightEar = face.landmarks[FaceLandmarkType.rightEar];
 
     final wellPositioned = !(face.headEulerAngleY! > 2 || face.headEulerAngleY! < -2) &&
-        !(face.headEulerAngleZ! > 30 || face.headEulerAngleZ! < -30) &&
+        !(face.headEulerAngleZ! > 2 || face.headEulerAngleZ! < -2) &&
         (leftEar?.position.y ?? -1) >= 0 &&
         (leftEar?.position.x ?? -1) >= 0 &&
         (rightEar?.position.y ?? -1) >= 0 &&
