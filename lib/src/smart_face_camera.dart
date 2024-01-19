@@ -81,7 +81,7 @@ class SmartFaceCamera extends StatefulWidget {
     this.lensControlIcon,
     this.flashControlBuilder,
     this.messageBuilder,
-    Key? key,
+    super.key,
     required this.controller,
     this.isLoading = false,
     this.isError = false,
@@ -90,7 +90,7 @@ class SmartFaceCamera extends StatefulWidget {
     required this.size,
     this.sensorOrientation,
     this.previewOrientation,
-  }) : super(key: key);
+  });
 
   @override
   State<SmartFaceCamera> createState() => _SmartFaceCameraState();
