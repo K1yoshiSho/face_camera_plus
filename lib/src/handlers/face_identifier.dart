@@ -68,12 +68,7 @@ class FaceIdentifier {
     final FaceLandmark? leftEye = face.landmarks[FaceLandmarkType.leftEye];
     final FaceLandmark? rightEye = face.landmarks[FaceLandmarkType.rightEye];
 
-    final wellPositioned = noseBase != null &&
-        leftEye != null &&
-        rightEye != null &&
-        !(face.headEulerAngleY! > 4 || face.headEulerAngleY! < -4) &&
-        (face.leftEyeOpenProbability == null || face.leftEyeOpenProbability! >= 0.5) &&
-        (face.rightEyeOpenProbability == null || face.rightEyeOpenProbability! >= 0.5);
+    final wellPositioned = noseBase != null && leftEye != null && rightEye != null && !(face.headEulerAngleY! > 7 || face.headEulerAngleY! < -7);
 
     return DetectedFace(wellPositioned: wellPositioned, face: face);
   }
