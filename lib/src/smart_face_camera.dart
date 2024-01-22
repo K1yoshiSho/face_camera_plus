@@ -376,11 +376,13 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
             takePicture().then((XFile? file) {
               if (file != null) {
                 widget.onCapture(
-                    FaceBox(
-                      face: _detectedFaceBox?.face,
-                      imageSize: _detectedFaceBox!.imageSize,
-                      widgetSize: _detectedFaceBox!.widgetSize,
-                    ),
+                    _detectedFaceBox != null
+                        ? FaceBox(
+                            face: _detectedFaceBox?.face,
+                            imageSize: _detectedFaceBox?.imageSize,
+                            widgetSize: _detectedFaceBox?.widgetSize,
+                          )
+                        : null,
                     File(file.path));
                 _isPhotoTaking = false;
               }
