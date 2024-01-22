@@ -9,6 +9,7 @@ export 'package:camera/camera.dart';
 export 'package:face_camera/src/smart_face_camera.dart';
 export 'package:face_camera/src/res/enums.dart';
 export 'package:face_camera/src/models/detected_image.dart';
+export 'src/models/face_box.dart';
 
 class FaceCamera {
   //static const MethodChannel _channel = MethodChannel('face_camera');

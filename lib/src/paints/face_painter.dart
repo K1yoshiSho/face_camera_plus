@@ -74,6 +74,11 @@ class FacePainter extends CustomPainter {
 }
 
 RRect _scaleRect({required Rect rect, required Size imageSize, required Size widgetSize, double? scaleX, double? scaleY}) {
-  return RRect.fromLTRBR((widgetSize.width - rect.left.toDouble() * scaleX!), rect.top.toDouble() * scaleY!,
-      widgetSize.width - rect.right.toDouble() * scaleX, rect.bottom.toDouble() * scaleY, const Radius.circular(10));
+  return RRect.fromLTRBR(
+    (widgetSize.width - rect.left.toDouble() * scaleX!),
+    rect.top.toDouble() * scaleY!,
+    widgetSize.width - rect.right.toDouble() * scaleX,
+    rect.bottom.toDouble() * scaleY,
+    const Radius.circular(10),
+  );
 }

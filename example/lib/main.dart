@@ -5,7 +5,6 @@ import 'package:image/image.dart' as imglib;
 import 'package:flutter/foundation.dart';
 import 'package:wakelock/wakelock.dart';
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 
 import 'package:face_camera/face_camera.dart';
 
@@ -77,22 +76,29 @@ class _MyAppState extends State<MyApp> {
               );
             }
             return SmartFaceCamera(
-              autoCapture: false,
+              autoCapture: true,
               size: size,
               controller: smartFaceController,
               showCaptureControl: true,
               // sensorOrientation: 270,
               // previewOrientation: 180,
               defaultCameraLens: CameraLensDirection.front,
-              onCapture: (File? image) {
-                // setState(() => _capturedImage = image);
+              onCapture: (FaceBox? face, File? image) async {
+                final _temp = await compute(
+                  fixImage,
+                  (
+                    image!.path,
+                    scaleRect(rect: face!.face!.boundingBox, imageSize: face.imageSize!, widgetSize: face.widgetSize!).center,
+                  ),
+                );
+                setState(() => _capturedImage = _temp);
               },
               onFaceDetected: (Face? face, CameraImage? image) async {},
               messageBuilder: (context, face) {
                 if (face?.face == null) {
-                  return _message('Place your face in the camera: ${_cameras}');
+                  return _message('Place your face in the camera: $_cameras');
                 } else if (face != null && !face.wellPositioned) {
-                  return _message('Center your face in the square: ${_cameras}');
+                  return _message('Center your face in the square: $_cameras');
                 } else if (face != null && face.wellPositioned) {
                   return _message('Face detected');
                 }
@@ -117,6 +123,39 @@ class _MyAppState extends State<MyApp> {
         padding: const EdgeInsets.symmetric(horizontal: 55, vertical: 15),
         child: Text(msg, textAlign: TextAlign.center, style: const TextStyle(fontSize: 14, height: 1.5, fontWeight: FontWeight.w400)),
       );
+}
+
+/// [fixImage] - This function fixes the orientation of the image captured by the camera.
+Future<File?> fixImage((String imagePath, Offset? offset) params) async {
+  // Decode the image from the given imagePath and read its bytes as input
+  final imglib.Image? capturedImage = imglib.decodeImage(await File(params.$1).readAsBytes());
+
+  // Check if the capturedImage is not null
+  if (capturedImage != null) {
+    // Copy and rotate the image with angle 0 to ensure it is oriented correctly
+    final imglib.Image orientedImage = imglib.copyRotate(capturedImage, angle: 0);
+
+    // Flip the orientedImage horizontally
+    final imglib.Image fixedImage = imglib.flipHorizontal(orientedImage);
+
+    // Calculate the cropping parameters
+    int cropWidth = (fixedImage.width * 0.7).round();
+    int cropHeight = (fixedImage.height * 0.7).round();
+    int offsetX = params.$2?.dx.round() ?? ((fixedImage.width - cropWidth) ~/ 2);
+    int offsetY = params.$2?.dy.round() ?? ((fixedImage.height - cropHeight) ~/ 2);
+
+    // Crop the image
+    final imglib.Image croppedImage = imglib.copyCrop(fixedImage, x: offsetX, y: offsetY - 200, width: cropWidth, height: cropHeight);
+
+    // Convert to grayscale
+    final imglib.Image grayscaleImage = imglib.grayscale(croppedImage);
+
+    // Write the encoded and compressed image bytes of the grayscaleImage to the original imagePath and return the file
+    return await File(params.$1).writeAsBytes(imglib.encodeJpg(grayscaleImage, quality: 75));
+  }
+
+  // If capturedImage is null, return null indicating that the image could not be fixed
+  return null;
 }
 
 imglib.Image? convertYUV420toImageColor(CameraImage image) {
