@@ -153,7 +153,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   @override
   Widget build(BuildContext context) {
     final CameraController? cameraController = _controller;
-    log("isPhotoTaking: $_isPhotoTaking");
+
     return Stack(
       alignment: Alignment.center,
       children: [
