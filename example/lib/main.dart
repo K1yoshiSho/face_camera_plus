@@ -139,13 +139,13 @@ Future<File?> fixImage((String imagePath, Offset? offset) params) async {
     final imglib.Image fixedImage = imglib.flipHorizontal(orientedImage);
 
     // Calculate the cropping parameters
-    int cropWidth = (fixedImage.width * 0.7).round();
-    int cropHeight = (fixedImage.height * 0.7).round();
+    int cropWidth = (fixedImage.width * 0.75).round();
+    int cropHeight = (fixedImage.height * 0.85).round();
     int offsetX = params.$2?.dx.round() ?? ((fixedImage.width - cropWidth) ~/ 2);
-    int offsetY = params.$2?.dy.round() ?? ((fixedImage.height - cropHeight) ~/ 2);
+    int offsetY = params.$2?.dy.toInt() ?? ((fixedImage.height - cropHeight) ~/ 2);
 
     // Crop the image
-    final imglib.Image croppedImage = imglib.copyCrop(fixedImage, x: offsetX, y: offsetY - 200, width: cropWidth, height: cropHeight);
+    final imglib.Image croppedImage = imglib.copyCrop(fixedImage, x: offsetX - 100, y: offsetY - 100, width: cropWidth, height: cropHeight);
 
     // Convert to grayscale
     final imglib.Image grayscaleImage = imglib.grayscale(croppedImage);

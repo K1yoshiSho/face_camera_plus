@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:developer';
 import 'dart:io';
 import 'dart:math' as math;
 
@@ -197,16 +196,16 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
                       ),
                     ),
                   ),
-                  if (_detectedFaceBox?.face != null)
-                    CustomPaint(
-                      painter: DotPainter(
-                        offset: scaleRect(
-                          rect: _detectedFaceBox!.face!.boundingBox,
-                          imageSize: _detectedFaceBox!.imageSize!,
-                          widgetSize: _detectedFaceBox!.widgetSize!,
-                        ).center,
-                      ),
-                    ),
+                  // if (_detectedFaceBox?.face != null)
+                  //   CustomPaint(
+                  //     painter: DotPainter(
+                  //       offset: scaleRect(
+                  //         rect: _detectedFaceBox!.face!.boundingBox,
+                  //         imageSize: _detectedFaceBox!.imageSize!,
+                  //         widgetSize: _detectedFaceBox!.widgetSize!,
+                  //       ).center,
+                  //     ),
+                  //   ),
                   // CustomPaint(
                   //   painter: SquarePainter(
                   //     rect: scaleRect(
@@ -469,18 +468,17 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   }
 }
 
-RRect scaleRect({required Rect rect, required Size imageSize, required Size widgetSize, double? scaleX, double? scaleY}) {
+Rect scaleRect({required Rect rect, required Size imageSize, required Size widgetSize, double? scaleX, double? scaleY}) {
   // Значения по умолчанию для масштабирования, если они не предоставлены
   scaleX ??= widgetSize.width / imageSize.width;
   scaleY ??= widgetSize.height / imageSize.height;
 
-  return RRect.fromLTRBR(
-      (widgetSize.width - rect.left.toDouble() * scaleX), // Левая сторона
-      rect.top.toDouble() * scaleY, // Верхняя сторона
-      widgetSize.width - rect.right.toDouble() * scaleX, // Правая сторона
-      rect.bottom.toDouble() * scaleY, // Нижняя сторона
-      const Radius.circular(10) // Радиус скругления
-      );
+  return Rect.fromLTRB(
+    (widgetSize.width - rect.left.toDouble() * scaleX), // Левая сторона
+    rect.top.toDouble() * scaleY, // Верхняя сторона
+    widgetSize.width - rect.right.toDouble() * scaleX, // Правая сторона
+    rect.bottom.toDouble() * scaleY, // Нижняя сторона
+  );
 }
 
 class DotPainter extends CustomPainter {
@@ -497,7 +495,7 @@ class DotPainter extends CustomPainter {
       ..strokeCap = StrokeCap.round
       ..style = PaintingStyle.fill;
 
-    canvas.drawCircle(offset, dotSize, paint);
+    canvas.drawCircle(Offset(offset.dx, offset.dy - 50), dotSize, paint);
   }
 
   @override
