@@ -84,14 +84,16 @@ class _MyAppState extends State<MyApp> {
               // previewOrientation: 180,
               defaultCameraLens: CameraLensDirection.front,
               onCapture: (FaceBox? face, File? image) async {
-                final _temp = await compute(
-                  fixImage,
-                  (
-                    image!.path,
-                    scaleRect(rect: face!.face!.boundingBox, imageSize: face.imageSize!, widgetSize: face.widgetSize!).center,
-                  ),
-                );
-                setState(() => _capturedImage = _temp);
+                if (face != null && image != null) {
+                  final _temp = await compute(
+                    fixImage,
+                    (
+                      image.path,
+                      scaleRect(rect: face.face!.boundingBox, imageSize: face.imageSize!, widgetSize: face.widgetSize!).center,
+                    ),
+                  );
+                  setState(() => _capturedImage = _temp);
+                }
               },
               onFaceDetected: (Face? face, CameraImage? image) async {},
               messageBuilder: (context, face) {

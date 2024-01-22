@@ -424,7 +424,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
   void _startImageStream() {
     final CameraController? cameraController = _controller;
-    if (cameraController != null) {
+    if (cameraController != null && !cameraController.value.isStreamingImages) {
       cameraController.startImageStream(_processImage);
     }
   }
@@ -435,30 +435,32 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       _alreadyCheckingImage = true;
       try {
         await FaceIdentifier.scanImage(cameraImage: cameraImage, camera: cameraController!.description).then((result) async {
-          setState(() {
-            _detectedFace = result;
-            _detectedFaceBox = FaceBox(
-              face: result?.face,
-              imageSize: Size(
-                _controller!.value.previewSize!.height,
-                _controller!.value.previewSize!.width,
-              ),
-              widgetSize: widget.size,
-            );
-          });
+          if (mounted) {
+            setState(() {
+              _detectedFace = result;
+              _detectedFaceBox = FaceBox(
+                face: result?.face,
+                imageSize: Size(
+                  _controller!.value.previewSize!.height,
+                  _controller!.value.previewSize!.width,
+                ),
+                widgetSize: widget.size,
+              );
+            });
 
-          if (result != null) {
-            try {
-              if (result.wellPositioned) {
-                if (widget.onFaceDetected != null) {
-                  widget.onFaceDetected!.call(result.face, cameraImage);
+            if (result != null) {
+              try {
+                if (result.wellPositioned) {
+                  if (widget.onFaceDetected != null) {
+                    widget.onFaceDetected!.call(result.face, cameraImage);
+                  }
+                  if (widget.autoCapture) {
+                    _onTakePictureButtonPressed(detectedFaceBox: _detectedFaceBox);
+                  }
                 }
-                if (widget.autoCapture) {
-                  _onTakePictureButtonPressed(detectedFaceBox: _detectedFaceBox);
-                }
+              } catch (e) {
+                logError(e.toString());
               }
-            } catch (e) {
-              logError(e.toString());
             }
           }
         });
