@@ -83,6 +83,7 @@ class _MyAppState extends State<MyApp> {
               // sensorOrientation: 270,
               // previewOrientation: 180,
               defaultCameraLens: CameraLensDirection.front,
+              onError: () {},
               onCapture: (FaceBox? face, File? image) async {
                 if (face != null && image != null) {
                   final _temp = await compute(
@@ -134,26 +135,26 @@ Future<File?> fixImage((String imagePath, Offset? offset) params) async {
 
   // Check if the capturedImage is not null
   if (capturedImage != null) {
-    // Copy and rotate the image with angle 0 to ensure it is oriented correctly
-    final imglib.Image orientedImage = imglib.copyRotate(capturedImage, angle: 0);
+    // // Copy and rotate the image with angle 0 to ensure it is oriented correctly
+    // final imglib.Image orientedImage = imglib.copyRotate(capturedImage, angle: 0);
 
-    // Flip the orientedImage horizontally
-    final imglib.Image fixedImage = imglib.flipHorizontal(orientedImage);
+    // // Flip the orientedImage horizontally
+    // final imglib.Image fixedImage = imglib.flipHorizontal(capturedImage);
 
     // Calculate the cropping parameters
-    int cropWidth = (fixedImage.width * 0.75).round();
-    int cropHeight = (fixedImage.height * 0.85).round();
-    int offsetX = params.$2?.dx.round() ?? ((fixedImage.width - cropWidth) ~/ 2);
-    int offsetY = params.$2?.dy.toInt() ?? ((fixedImage.height - cropHeight) ~/ 2);
+    int cropWidth = (capturedImage.width * 0.6).round();
+    int cropHeight = (capturedImage.height * 0.75).round();
+    int offsetX = params.$2?.dx.round() ?? ((capturedImage.width - cropWidth) ~/ 2);
+    int offsetY = params.$2?.dy.toInt() ?? ((capturedImage.height - cropHeight) ~/ 2);
 
     // Crop the image
-    final imglib.Image croppedImage = imglib.copyCrop(fixedImage, x: offsetX - 100, y: offsetY - 100, width: cropWidth, height: cropHeight);
+    final imglib.Image croppedImage = imglib.copyCrop(capturedImage, x: offsetX - 100, y: offsetY - 100, width: cropWidth, height: cropHeight);
 
     // Convert to grayscale
     final imglib.Image grayscaleImage = imglib.grayscale(croppedImage);
 
     // Write the encoded and compressed image bytes of the grayscaleImage to the original imagePath and return the file
-    return await File(params.$1).writeAsBytes(imglib.encodeJpg(grayscaleImage, quality: 75));
+    return await File(params.$1).writeAsBytes(imglib.encodeJpg(grayscaleImage, quality: 100));
   }
 
   // If capturedImage is null, return null indicating that the image could not be fixed

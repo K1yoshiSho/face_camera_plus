@@ -52,6 +52,7 @@ class SmartFaceCamera extends StatefulWidget {
   final CameraOrientation? orientation;
   final void Function(FaceBox? faceBox, File? image) onCapture;
   final void Function(Face? face, CameraImage? cameraImage)? onFaceDetected;
+  final void Function() onError;
   final Widget? captureControlIcon;
   final Widget? lensControlIcon;
   final FlashControlBuilder? flashControlBuilder;
@@ -89,6 +90,7 @@ class SmartFaceCamera extends StatefulWidget {
     required this.size,
     this.sensorOrientation,
     this.previewOrientation,
+    required this.onError,
   });
 
   @override
@@ -391,6 +393,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
         );
       }
     } catch (e) {
+      widget.onError();
       logError(e.toString());
     }
   }
@@ -412,6 +415,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       return file;
     } on Exception catch (e) {
       logError("From: takePicture()");
+      widget.onError();
       _showCameraException(e);
       return null;
     }
@@ -459,6 +463,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
                   }
                 }
               } catch (e) {
+                widget.onError();
                 logError(e.toString());
               }
             }
@@ -466,6 +471,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
         });
         _alreadyCheckingImage = false;
       } catch (ex, stack) {
+        widget.onError();
         logError('$ex, $stack');
       }
     }
