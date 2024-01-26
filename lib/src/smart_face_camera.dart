@@ -53,6 +53,8 @@ class SmartFaceCamera extends StatefulWidget {
   final void Function(FaceBox? faceBox, File? image) onCapture;
   final void Function(Face? face, CameraImage? cameraImage)? onFaceDetected;
   final void Function() onError;
+  final void Function()? onInactive;
+  final void Function()? onResumed;
   final Widget? captureControlIcon;
   final Widget? lensControlIcon;
   final FlashControlBuilder? flashControlBuilder;
@@ -91,6 +93,8 @@ class SmartFaceCamera extends StatefulWidget {
     this.sensorOrientation,
     this.previewOrientation,
     required this.onError,
+    this.onInactive,
+    this.onResumed,
   });
 
   @override
@@ -139,6 +143,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
           });
         });
       }
+      widget.onInactive?.call();
     } else if (state == AppLifecycleState.resumed) {
       if (!cameraController.value.isStreamingImages) {
         _initializeCameraController();
@@ -148,6 +153,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
           });
         });
       }
+      widget.onResumed?.call();
     }
   }
 
