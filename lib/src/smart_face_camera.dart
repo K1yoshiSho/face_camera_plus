@@ -43,6 +43,7 @@ class SmartFaceCamera extends StatefulWidget {
   final ImageResolution imageResolution;
   final SmartFaceController controller;
   final CameraLensDirection? defaultCameraLens;
+  final CameraDescription? customCameraDescription;
   final CameraFlashMode defaultFlashMode;
   final bool enableAudio;
   final bool autoCapture;
@@ -95,6 +96,7 @@ class SmartFaceCamera extends StatefulWidget {
     required this.onError,
     this.onInactive,
     this.onResumed,
+    this.customCameraDescription,
   });
 
   @override
@@ -259,11 +261,12 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     List<CameraDescription> cameras = FaceCamera.cameras;
     CameraDescription cameraDescription = cameras.firstWhere((element) => element.lensDirection == widget.defaultCameraLens);
     final CameraController cameraController = CameraController(
-      CameraDescription(
-        name: cameraDescription.name,
-        lensDirection: CameraLensDirection.front,
-        sensorOrientation: widget.sensorOrientation ?? cameraDescription.sensorOrientation,
-      ),
+      widget.customCameraDescription ??
+          CameraDescription(
+            name: cameraDescription.name,
+            lensDirection: CameraLensDirection.front,
+            sensorOrientation: widget.sensorOrientation ?? cameraDescription.sensorOrientation,
+          ),
       ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.yuv420 : ImageFormatGroup.bgra8888,
