@@ -115,12 +115,18 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   DetectedFace? _detectedFace;
   FaceBox? _detectedFaceBox;
 
+  late double _angle;
+
   @override
   void initState() {
     super.initState();
     widget.controller.attach(this);
     WidgetsBinding.instance.addObserver(this);
-    _initializeCameraController();
+    _initializeCameraController().then((_) {
+      if (mounted) {
+        _angle = ((widget.previewOrientation ?? _controller!.description.sensorOrientation + 90) % 360) * (math.pi / 180);
+      }
+    });
   }
 
   @override
@@ -208,25 +214,6 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
                       ),
                     ),
                   ),
-                  // if (_detectedFaceBox?.face != null)
-                  //   CustomPaint(
-                  //     painter: DotPainter(
-                  //       offset: scaleRect(
-                  //         rect: _detectedFaceBox!.face!.boundingBox,
-                  //         imageSize: _detectedFaceBox!.imageSize!,
-                  //         widgetSize: _detectedFaceBox!.widgetSize!,
-                  //       ).center,
-                  //     ),
-                  //   ),
-                  // CustomPaint(
-                  //   painter: SquarePainter(
-                  //     rect: scaleRect(
-                  //       rect: _detectedFaceBox!.face!.boundingBox,
-                  //       imageSize: _detectedFaceBox!.imageSize!,
-                  //       widgetSize: _detectedFaceBox!.widgetSize!,
-                  //     ),
-                  //   ),
-                  // ),
                 ]
               ],
             ),
@@ -334,7 +321,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     final CameraController? cameraController = _controller;
     if (cameraController != null && cameraController.value.isInitialized) {
       return Transform.rotate(
-        angle: ((widget.previewOrientation ?? cameraController.description.sensorOrientation + 90) % 360) * (math.pi / 180),
+        angle: _angle,
         child: CameraPreview(
           cameraController,
         ),
