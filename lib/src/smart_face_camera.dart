@@ -115,20 +115,12 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   DetectedFace? _detectedFace;
   FaceBox? _detectedFaceBox;
 
-  late double _angle;
-
   @override
   void initState() {
     super.initState();
     widget.controller.attach(this);
     WidgetsBinding.instance.addObserver(this);
-    _initializeCameraController().then((_) {
-      if (mounted) {
-        setState(() {
-          _angle = ((widget.previewOrientation ?? _controller!.description.sensorOrientation + 90) % 360) * (math.pi / 180);
-        });
-      }
-    });
+    _initializeCameraController().then((_) {});
   }
 
   @override
@@ -323,7 +315,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     final CameraController? cameraController = _controller;
     if (cameraController != null && cameraController.value.isInitialized) {
       return Transform.rotate(
-        angle: _angle,
+        angle: ((widget.previewOrientation ?? cameraController.description.sensorOrientation + 90) % 360) * (math.pi / 180),
         child: CameraPreview(
           cameraController,
         ),
