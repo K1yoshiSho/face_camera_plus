@@ -29,7 +29,9 @@ class SmartFaceController {
   }
 
   Future<void> startCamera() async {
-    _smartFaceCameraState._startImageStream();
+    if (!_smartFaceCameraState._controller!.value.isStreamingImages) {
+      _smartFaceCameraState._controller?.startImageStream(_smartFaceCameraState._processImage);
+    }
   }
 
   Future<void> stopCamera() async {
