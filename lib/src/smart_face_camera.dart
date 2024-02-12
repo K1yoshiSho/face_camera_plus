@@ -124,7 +124,9 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     WidgetsBinding.instance.addObserver(this);
     _initializeCameraController().then((_) {
       if (mounted) {
-        _angle = ((widget.previewOrientation ?? _controller!.description.sensorOrientation + 90) % 360) * (math.pi / 180);
+        setState(() {
+          _angle = ((widget.previewOrientation ?? _controller!.description.sensorOrientation + 90) % 360) * (math.pi / 180);
+        });
       }
     });
   }
