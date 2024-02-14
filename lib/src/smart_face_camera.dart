@@ -114,7 +114,6 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   CameraController? _controller;
 
   bool _alreadyCheckingImage = false;
-  bool _isPhotoTaking = false;
 
   DetectedFace? _detectedFace;
 
@@ -361,28 +360,13 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     final CameraController? cameraController = _controller;
     try {
       await Future<void>.delayed(Duration.zero);
-      if (cameraController != null && cameraController.value.isStreamingImages && !_isPhotoTaking) {
+      if (cameraController != null && cameraController.value.isStreamingImages && !cameraController.value.isTakingPicture) {
         await Future<void>.delayed(const Duration(milliseconds: 100)).then(
           (value) {
-            _isPhotoTaking = true;
-            cameraController.stopImageStream().then((_) {
-              takePicture().then((XFile? file) {
-                if (file != null) {
-                  widget.onCapture(File(file.path));
-                  _isPhotoTaking = false;
-
-                  Future.delayed(const Duration(seconds: 1)).whenComplete(() {
-                    if (mounted && cameraController.value.isInitialized) {
-                      try {
-                        _startImageStream();
-                      } catch (e) {
-                        widget.onError();
-                        logError(e.toString());
-                      }
-                    }
-                  });
-                }
-              });
+            takePicture().then((XFile? file) {
+              if (file != null) {
+                widget.onCapture(File(file.path));
+              }
             });
           },
         );
@@ -396,12 +380,10 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   Future<XFile?> takePicture() async {
     final CameraController? cameraController = _controller;
     if (cameraController == null || !cameraController.value.isInitialized) {
-      // showInSnackBar('Error: select a camera first.');
       return null;
     }
 
     if (cameraController.value.isTakingPicture) {
-      // A capture is already pending, do nothing.
       return null;
     }
 
