@@ -12,6 +12,9 @@ import 'paints/hole_painter.dart';
 import 'res/builders.dart';
 import 'utils/logger.dart';
 
+// ignore: library_private_types_in_public_api
+GlobalKey<_SmartFaceCameraState> smartFaceCameraKey = GlobalKey();
+
 /// A widget that wraps the [CameraPreview] widget and provides a face detection overlay.
 
 /// This class is used to control the InnerDrawer.
@@ -24,13 +27,13 @@ class SmartFaceController {
     _smartFaceCameraState = smartFaceCameraState;
   }
 
-  Future<void> takePicture({FaceBox? detectedFaceBox}) async {
-    _smartFaceCameraState._onTakePictureButtonPressed(detectedFaceBox: detectedFaceBox);
+  Future<void> takePicture() async {
+    _smartFaceCameraState._onTakePictureButtonPressed();
   }
 
   Future<void> startCamera() async {
     if (!_smartFaceCameraState._controller!.value.isStreamingImages) {
-      _smartFaceCameraState._controller?.startImageStream(_smartFaceCameraState._processImage);
+      _smartFaceCameraState._startImageStream();
     }
   }
 
@@ -53,7 +56,7 @@ class SmartFaceCamera extends StatefulWidget {
   final String? message;
   final TextStyle messageStyle;
   final CameraOrientation? orientation;
-  final void Function(FaceBox? faceBox, File? image) onCapture;
+  final void Function(File? image) onCapture;
   final void Function(Face? face, CameraImage? cameraImage)? onFaceDetected;
   final void Function() onError;
   final void Function()? onInactive;
@@ -109,11 +112,9 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   CameraController? _controller;
 
   bool _alreadyCheckingImage = false;
-  bool _isDisposed = false;
   bool _isPhotoTaking = false;
 
   DetectedFace? _detectedFace;
-  FaceBox? _detectedFaceBox;
 
   @override
   void initState() {
@@ -141,21 +142,11 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     if (state == AppLifecycleState.inactive) {
       if (cameraController.value.isStreamingImages) {
         cameraController.stopImageStream();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          setState(() {
-            _isDisposed = true;
-          });
-        });
       }
       widget.onInactive?.call();
     } else if (state == AppLifecycleState.resumed) {
       if (!cameraController.value.isStreamingImages) {
         _initializeCameraController();
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          setState(() {
-            _isDisposed = false;
-          });
-        });
       }
       widget.onResumed?.call();
     }
@@ -166,9 +157,10 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     final CameraController? cameraController = _controller;
 
     return Stack(
+      key: smartFaceCameraKey,
       alignment: Alignment.center,
       children: [
-        if (cameraController != null && cameraController.value.isInitialized && !_isDisposed) ...[
+        if (cameraController != null && cameraController.value.isInitialized) ...[
           SizedBox(
             width: widget.size.width,
             child: Stack(
@@ -361,7 +353,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     cameraController.setFocusPoint(offset);
   }
 
-  void _onTakePictureButtonPressed({FaceBox? detectedFaceBox}) async {
+  void _onTakePictureButtonPressed() async {
     final CameraController? cameraController = _controller;
     try {
       await Future<void>.delayed(Duration.zero);
@@ -371,15 +363,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
             _isPhotoTaking = true;
             takePicture().then((XFile? file) {
               if (file != null) {
-                widget.onCapture(
-                    _detectedFaceBox != null
-                        ? FaceBox(
-                            face: _detectedFaceBox?.face,
-                            imageSize: _detectedFaceBox?.imageSize,
-                            widgetSize: _detectedFaceBox?.widgetSize,
-                          )
-                        : null,
-                    File(file.path));
+                widget.onCapture(File(file.path));
                 _isPhotoTaking = false;
               }
             });
@@ -436,14 +420,6 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
           if (mounted) {
             setState(() {
               _detectedFace = result;
-              _detectedFaceBox = FaceBox(
-                face: result?.face,
-                imageSize: Size(
-                  _controller!.value.previewSize!.height,
-                  _controller!.value.previewSize!.width,
-                ),
-                widgetSize: widget.size,
-              );
             });
 
             if (result != null) {
@@ -453,7 +429,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
                     widget.onFaceDetected!.call(result.face, cameraImage);
                   }
                   if (widget.autoCapture) {
-                    _onTakePictureButtonPressed(detectedFaceBox: _detectedFaceBox);
+                    _onTakePictureButtonPressed();
                   }
                 }
               } catch (e) {
@@ -470,57 +446,4 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       }
     }
   }
-}
-
-Rect scaleRect({required Rect rect, required Size imageSize, required Size widgetSize, double? scaleX, double? scaleY}) {
-  // Значения по умолчанию для масштабирования, если они не предоставлены
-  scaleX ??= widgetSize.width / imageSize.width;
-  scaleY ??= widgetSize.height / imageSize.height;
-
-  return Rect.fromLTRB(
-    (widgetSize.width - rect.left.toDouble() * scaleX), // Левая сторона
-    rect.top.toDouble() * scaleY, // Верхняя сторона
-    widgetSize.width - rect.right.toDouble() * scaleX, // Правая сторона
-    rect.bottom.toDouble() * scaleY, // Нижняя сторона
-  );
-}
-
-class DotPainter extends CustomPainter {
-  final Offset offset;
-  final double dotSize;
-  final Color dotColor;
-
-  DotPainter({required this.offset, this.dotSize = 10.0, this.dotColor = Colors.red});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = dotColor
-      ..strokeCap = StrokeCap.round
-      ..style = PaintingStyle.fill;
-
-    canvas.drawCircle(Offset(offset.dx, offset.dy - 50), dotSize, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
-}
-
-class SquarePainter extends CustomPainter {
-  final RRect rect;
-  final Color squareColor;
-
-  SquarePainter({required this.rect, this.squareColor = Colors.blue});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = squareColor
-      ..style = PaintingStyle.fill; // Используйте PaintingStyle.stroke, если нужен только контур
-
-    canvas.drawRRect(rect, paint);
-  }
-
-  @override
-  bool shouldRepaint(CustomPainter oldDelegate) => false;
 }
