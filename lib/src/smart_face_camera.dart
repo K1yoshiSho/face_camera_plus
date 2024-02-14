@@ -190,21 +190,23 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
                   },
                 ),
                 if (_detectedFace != null) ...[
-                  SizedBox(
-                    width: cameraController.value.previewSize!.width,
-                    height: cameraController.value.previewSize!.height,
-                    child: CustomPaint(
-                      size: widget.size,
-                      painter: FacePainter(
-                        face: _detectedFace!.face,
-                        imageSize: Size(
-                          _controller!.value.previewSize!.height,
-                          _controller!.value.previewSize!.width,
+                  RepaintBoundary(
+                    child: SizedBox(
+                      width: cameraController.value.previewSize!.width,
+                      height: cameraController.value.previewSize!.height,
+                      child: CustomPaint(
+                        size: widget.size,
+                        painter: FacePainter(
+                          face: _detectedFace!.face,
+                          imageSize: Size(
+                            _controller!.value.previewSize!.height,
+                            _controller!.value.previewSize!.width,
+                          ),
+                          isError: widget.isError,
+                          isLoading: widget.isLoading,
+                          isFetched: widget.isFetched,
+                          isStateEnable: widget.isStateEnabled,
                         ),
-                        isError: widget.isError,
-                        isLoading: widget.isLoading,
-                        isFetched: widget.isFetched,
-                        isStateEnable: widget.isStateEnabled,
                       ),
                     ),
                   ),

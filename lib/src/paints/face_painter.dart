@@ -49,18 +49,6 @@ class FacePainter extends CustomPainter {
       }
     }
 
-    // if (face!.headEulerAngleY! > 10 || face!.headEulerAngleY! < -10) {
-    // paint = Paint()
-    //   ..style = PaintingStyle.stroke
-    //   ..strokeWidth = 5.0
-    //   ..color = const Color(0xFFef4444);
-    // } else {
-    //   paint = Paint()
-    //     ..style = PaintingStyle.stroke
-    //     ..strokeWidth = 5.0
-    //     ..color = const Color(0xFF68a835);
-    // }
-
     scaleX = size.width / imageSize.width;
     scaleY = size.height / imageSize.height;
 
