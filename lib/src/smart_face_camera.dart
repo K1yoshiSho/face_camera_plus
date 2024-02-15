@@ -34,15 +34,15 @@ class SmartFaceController {
   Future<void> startCamera() async {
     if (!_smartFaceCameraState._controller!.value.isStreamingImages) {
       _smartFaceCameraState._startImageStream();
+      _smartFaceCameraState._controller?.resumePreview();
     }
-    _smartFaceCameraState._controller?.resumePreview();
   }
 
   Future<void> stopCamera() async {
     if (_smartFaceCameraState._controller!.value.isStreamingImages) {
       _smartFaceCameraState._controller?.stopImageStream();
+      _smartFaceCameraState._controller?.pausePreview();
     }
-    _smartFaceCameraState._controller?.pausePreview();
   }
 }
 
@@ -143,14 +143,14 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     if (state == AppLifecycleState.inactive) {
       if (cameraController.value.isStreamingImages) {
         cameraController.stopImageStream();
+        cameraController.pausePreview();
       }
-      cameraController.pausePreview();
       widget.onInactive?.call();
     } else if (state == AppLifecycleState.resumed) {
       if (!cameraController.value.isStreamingImages) {
         _initializeCameraController();
+        cameraController.resumePreview();
       }
-      cameraController.resumePreview();
       widget.onResumed?.call();
     }
   }
@@ -361,7 +361,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     try {
       await Future<void>.delayed(Duration.zero);
       if (cameraController != null && cameraController.value.isStreamingImages && !cameraController.value.isTakingPicture) {
-        await Future<void>.delayed(const Duration(milliseconds: 100)).then(
+        await Future<void>.delayed(const Duration(milliseconds: 200)).then(
           (value) {
             takePicture().then((XFile? file) {
               if (file != null) {
