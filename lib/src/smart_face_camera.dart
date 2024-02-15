@@ -114,15 +114,16 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
   CameraController? _controller;
 
   bool _alreadyCheckingImage = false;
-
   DetectedFace? _detectedFace;
+
+  bool _isCameraDisposed = false;
 
   @override
   void initState() {
     super.initState();
     widget.controller.attach(this);
+    _initializeCameraController(widget.customCameraDescription).then((_) {});
     WidgetsBinding.instance.addObserver(this);
-    _initializeCameraController().then((_) {});
   }
 
   @override
@@ -141,21 +142,20 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     }
 
     if (state == AppLifecycleState.inactive) {
-      // if (cameraController.value.isStreamingImages) {
-      //   cameraController.stopImageStream();
-      //   cameraController.pausePreview();
-      // }
+      setState(() {
+        _isCameraDisposed = true;
+      });
+      cameraController.stopImageStream();
       cameraController.dispose();
       widget.onInactive?.call();
     } else if (state == AppLifecycleState.resumed) {
-      // if (!cameraController.value.isStreamingImages) {
-      //   _initializeCameraController();
-      //   cameraController.resumePreview();
-      // }
-
-      _initializeCameraController().then((_) {
+      if (_isCameraDisposed) {
+        _initializeCameraController(cameraController.description);
         cameraController.resumePreview();
-      });
+        setState(() {
+          _isCameraDisposed = false;
+        });
+      }
       widget.onResumed?.call();
     }
   }
@@ -168,7 +168,9 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       key: smartFaceCameraKey,
       alignment: Alignment.center,
       children: [
-        if (cameraController != null && cameraController.value.isInitialized) ...[
+        if ((cameraController != null || cameraController!.value.isInitialized) &&
+            _isCameraDisposed == false &&
+            cameraController.value.previewSize != null) ...[
           SizedBox(
             width: widget.size.width,
             child: Stack(
@@ -242,17 +244,17 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     );
   }
 
-  Future<void> _initializeCameraController() async {
+  Future<void> _initializeCameraController(CameraDescription? description) async {
     List<CameraDescription> cameras = FaceCamera.cameras;
     CameraDescription cameraDescription = cameras.firstWhere((element) => element.lensDirection == widget.defaultCameraLens);
     final CameraController cameraController = CameraController(
-      widget.customCameraDescription ??
+      description ??
           CameraDescription(
             name: cameraDescription.name,
             lensDirection: CameraLensDirection.front,
             sensorOrientation: widget.sensorOrientation ?? cameraDescription.sensorOrientation,
           ),
-      ResolutionPreset.medium,
+      ResolutionPreset.veryHigh,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.yuv420 : ImageFormatGroup.bgra8888,
     );
@@ -389,7 +391,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
       return null;
     }
 
-    if (cameraController.value.isTakingPicture) {
+    if (cameraController.value.isTakingPicture || !cameraController.value.isInitialized) {
       return null;
     }
 
