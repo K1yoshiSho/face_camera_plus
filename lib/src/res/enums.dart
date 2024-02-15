@@ -66,3 +66,12 @@ enum CameraOrientation {
   /// The orientation that is 90 degrees counterclockwise from [portraitUp].
   landscapeRight,
 }
+
+/// Face indicator shapes
+enum IndicatorShape { defaultShape, square, circle, triangle, triangleInverted, image }
+
+class AppImages {
+  static const String _baseUrl = 'assets/images/';
+
+  static const faceNet = '${_baseUrl}face_net.png';
+}
