@@ -141,16 +141,21 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
     }
 
     if (state == AppLifecycleState.inactive) {
-      if (cameraController.value.isStreamingImages) {
-        cameraController.stopImageStream();
-        cameraController.pausePreview();
-      }
+      // if (cameraController.value.isStreamingImages) {
+      //   cameraController.stopImageStream();
+      //   cameraController.pausePreview();
+      // }
+      cameraController.dispose();
       widget.onInactive?.call();
     } else if (state == AppLifecycleState.resumed) {
-      if (!cameraController.value.isStreamingImages) {
-        _initializeCameraController();
+      // if (!cameraController.value.isStreamingImages) {
+      //   _initializeCameraController();
+      //   cameraController.resumePreview();
+      // }
+
+      _initializeCameraController().then((_) {
         cameraController.resumePreview();
-      }
+      });
       widget.onResumed?.call();
     }
   }
@@ -247,7 +252,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
             lensDirection: CameraLensDirection.front,
             sensorOrientation: widget.sensorOrientation ?? cameraDescription.sensorOrientation,
           ),
-      ResolutionPreset.veryHigh,
+      ResolutionPreset.medium,
       enableAudio: false,
       imageFormatGroup: Platform.isAndroid ? ImageFormatGroup.yuv420 : ImageFormatGroup.bgra8888,
     );
@@ -265,6 +270,7 @@ class _SmartFaceCameraState extends State<SmartFaceCamera> with WidgetsBindingOb
 
     try {
       await cameraController.initialize().then((_) {
+        cameraController.lockCaptureOrientation();
         _startImageStream();
         setState(() {});
       });
